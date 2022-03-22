@@ -9,7 +9,6 @@ Klasa ta powinna zawierac (jako protected):
 - sugerowana skladowa: `char* data_` wskazująca na dynamicznie zaalokowany obszar z tekstem
 - sugerowana skladowa: `std::size_t size_` zawierajaca informacje ile znakow trzyma aktualny tekst
 - sugerowana skladowa: `std::size_t capacity_` zawierajaca informacje ile znakow pomiesci aktualny bufor bez realokazji
-
 ### Poza skladowymi prosze o zaimplementowanie nastepujacych metod:
 1. Metody stale `size()`, `capacity()`, `const char* data()` ktore zwroca powyzsze skladowe
     1. size() ma zwracac rozmiar bez znaku konca tekstu
@@ -31,18 +30,15 @@ Klasa ta powinna zawierac (jako protected):
        w oparciu o ktory porownanie bedzie ignorowac lub nie wielkosc znakow.
 9. Prosze o napisanie metody `append`, ktora przyjmuje drugi SimpleString,
     a po jej zawolaniu jego zawartosc zostanie dodana do zawartosci `this`.
-
 ____________________________________________________________________________________
 ### Uwaga1: Nie wolno uzywac:
 `std::string` ani `std::string_view` ani innych specjalizacji `std::basic_string<...>`!
-
 ### Uwaga2: Prosze upewnic sie, ze nie ma wyciekow pamieci.
 ____________________________________________________________________________________
 ### Prosze po zaimplementowaniu przypatrzyc sie dokumentacji
 `std::string` i porownac metody z `SimpleString`.
 Warto docenic, ze mamy `std::string` a wiec sami nie musimy sie bawic z pamiecia`
 ____________________________________________________________________________________
-
 ## Do rozwazenia dla zaawansowanych:
 1. Zaimplementowac copy-on-write - wtedy mozna te sugerowane skladowe zastapic.
 2. W ktorych sytuacjach wygodnie byloby przeciazyc operatory?
@@ -66,7 +62,6 @@ ________________________________________________________________________________
 6. Prosze aby w pliku naglowkowym nie bylo `using namespace std;`, w zrodlowym moze.
 7. Mozna korzystac z metod z `<cstring>`.
 8. Jaka jest roznica miedzy `delete` a `delete []`?
-
 Mozna tworzyc dowolna ilosc metod pomocniczych, jednakze aby byly one prywatne.
 ____________________________________________________________________________________
 ## Punktacja:
@@ -93,28 +88,23 @@ public:
         capacity_ = 0;
     }
 
-    SimpleString(char *text)
+    SimpleString(const SimpleString &text)
     {
-        size_ = strlen(text);
+        char* pom=text.data();
+        size_ = text.size();
         data_ = new char[size_];
         instances_++;
-        for (int i = 0; i < size_; i++)
-        {
-            *(data_+i) = *(text+i);
-        }
-        capacity_ = 1000 - size_;
+        strcpy(data_,text.data());
+        capacity_ = text.capacity();
     }
 
-    SimpleString(const char text[])
+    SimpleString(const char *text)
     {
-        size_ = strlen(text);
+        size_ = strlen(text)+1;
         data_ = new char[size_];
         instances_++;
-        for (int i = 0; i < size_; i++)
-        {
-            *(data_ + i) = *(text + i);
-        }
-        capacity_ = 1000 - size_;
+        strcpy(data_,text);
+        capacity_ = size_*sizeof(char);
     }
 
     ~SimpleString()
@@ -138,30 +128,28 @@ public:
         return capacity_;
     }
 
-    const char* data()
+    char* data() const
     {
         return data_;
     }
 
     const char* c_str() const
     {
-        return data_ + '\0';
+        return data_;
     }
 
     void assign(const char* new_text)
     {
-        delete[] data_;
+        delete[](data_);
         size_ = strlen(new_text);
         data_ = new char[size_];
-        for (int i; i < size_; i++)
-        {
-            *(data_ + i) = *(new_text + i);
-        }
+        strcpy(data_, new_text);
+        capacity_=size_*sizeof(char);
     }
 
-    bool equal_to(SimpleString text2, bool case_sensitive = true) const
+    bool equal_to(const SimpleString &text2, bool case_sensitive = true) const
     {
-        if (case_sensitive && data_ == text2.data_)
+        if (case_sensitive && !strcmp(data_,text2.data()))
         {
             return true;
         }
@@ -171,7 +159,7 @@ public:
             if (size_ == text2.size_)
             {
                 int z = 0;
-                for (auto i = 0; i < size_; i++)
+                for (int i = 0; i < size_; i++)
                 {
                     if (tolower(*(data_ + i)) != tolower(*(text2.data_ + i)))
                     {
@@ -212,10 +200,7 @@ public:
 
         const char* pom2 = text2.data();
 
-        for (i; i < size_; i++)
-        {
-            *(data_ + i) = *(pom2 + i);
-        }
+        strcpy(data_ + i,pom2);
     }
 };
 
